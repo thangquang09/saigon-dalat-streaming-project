@@ -81,6 +81,7 @@ if __name__ == "__main__":
             .option('kafka.bootstrap.servers', 'broker:29092')
             .option('subscribe', topic)
             .option('startingOffsets', 'earliest')
+            .option('failOnDataLoss', 'false')
             .load()
             .selectExpr('CAST(value AS STRING)')
             .select(from_json(col('value'), schema).alias('data'))
@@ -94,6 +95,7 @@ if __name__ == "__main__":
             .format('parquet')
             .option('checkpointLocation', checkpointFolder)
             .option('path', output)
+            .option('failOnDataLoss', 'false')
             .outputMode('append')
             .start()
         )
@@ -140,5 +142,3 @@ if __name__ == "__main__":
         print(f"Error in streaming process: {e}")
         spark.stop()
         exit(1)
-    finally:
-        spark.stop()
