@@ -58,9 +58,11 @@ services:
     container_name: spark-master
     volumes:
       - ./jobs:/opt/bitnami/spark/jobs
+      - ./stream_data:/opt/bitnami/spark/stream_data
     command: /bin/bash -c "bin/spark-class org.apache.spark.deploy.master.Master"
     environment:
       - PYTHONPATH=/opt/bitnami/spark/jobs
+      - SPARK_MODE=master
     ports:
       - "9090:8080" 
       - "7077:7077"
@@ -71,6 +73,7 @@ services:
     image: bitnami/spark:latest
     volumes:
       - ./jobs:/opt/bitnami/spark/jobs
+      - ./stream_data:/opt/bitnami/spark/stream_data
     command: /bin/bash -c "bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"
     depends_on:
       - spark-master
@@ -87,6 +90,7 @@ services:
     image: bitnami/spark:latest
     volumes:
       - ./jobs:/opt/bitnami/spark/jobs
+      - ./stream_data:/opt/bitnami/spark/stream_data
     command: /bin/bash -c "bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"
     depends_on:
       - spark-master
@@ -98,6 +102,38 @@ services:
       - PYTHONPATH=/opt/bitnami/spark/jobs
     networks:
       - thangquang
+
+  # HDFS NameNode
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CLUSTER_NAME=hadoop-cluster
+    volumes:
+      - namenode:/hadoop/dfs/name
+
+  # HDFS DataNode
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    ports:
+      - "9864:9864" 
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - CLUSTER_NAME=hadoop-cluster
+    volumes:
+      - datanode:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
+volumes:
+  namenode:
+  datanode:
 
 networks:
   thangquang:
