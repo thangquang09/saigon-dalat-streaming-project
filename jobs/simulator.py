@@ -33,14 +33,62 @@ class Simulator:
             'deviceId': self.device_info['deviceId'],
             'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             'location': (location['latitude'], location['longitude']),
-            'speed': random.randint(20, 60), # km/h
             'controlPlate': self.device_info['controlPlate'],
             'deviceType': self.device_info['deviceType'],
             'model': self.device_info['model'],
             'year': self.device_info['year'],
         }
 
-    
+    def generate_gps_data(self):
+        location = self.current_cooordinates
+        timestamp = self.current_time
+        return {
+            'id': uuid4(),
+            'deviceId': self.device_info['deviceId'],
+            'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            'location': (location['latitude'], location['longitude']),
+            'speed': random.uniform(20, 60), # km/h
+            'direction': random.randint(0, 360),
+            'accuracy': "+-" + str(random.randint(2, 7)) + "m",
+            'satelliteCount': random.randint(2, 5),
+        }
+
+    def generate_camera_data(self):
+        timestamp = self.current_time
+        return {
+            'id': uuid4(),
+            'deviceId': self.device_info['deviceId'],
+            'cameraId': random.choice(self.device_info['cameraId']),
+            'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            'snapshot': "RandomSnapshotFromCamera",
+        }
+
+    def generate_weather_data(self):
+        location = self.current_cooordinates
+        timestamp = self.current_time
+        return {
+            'id': uuid4(),
+            'deviceId': self.device_info['deviceId'],
+            'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            'location': (location['latitude'], location['longitude']),
+            'temperature': round(random.uniform(20, 30), 1),
+            'humidity': random.randint(50, 80),
+            'windSpeed': round(random.uniform(0, 100), 1),
+            'weatherCondition': random.choice(['Sunny', 'Cloudy', 'Rainy'])
+        }
+
+    def generate_emergency_incident(self):
+        location = self.current_cooordinates
+        timestamp = self.current_time
+        incident_rate = random.uniform(0, 1) # 90% safety :v
+        return {
+            'id': uuid4(),
+            'deviceId': self.device_info['deviceId'],
+            'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            'location': (location['latitude'], location['longitude']),
+            'incidentId': uuid4(),
+            'type': 'None' if incident_rate < 0.9 else random.choice(['Accident', 'Fire', 'Medical', 'Police'])
+        }
 
     def move_vehicle(self):
         # move and update current_time
@@ -48,23 +96,24 @@ class Simulator:
         self.current_cooordinates['longitude'] += self.long_step + random.uniform(-0.0005, 0.0005)
         self.current_time += timedelta(seconds=random.randint(30, 60))
 
+    def produce_to_kafka(self, producer, topic, data):
+        pass
+
     def make_simulate(self):
         for step in range(self.steps):
             self.move_vehicle()
             vehicle_data = self.generate_vehicle_data()
-            print(vehicle_data)
+            gps_data = self.generate_gps_data()
+            camera_data = self.generate_camera_data()
+            weather_data = self.generate_weather_data()
+            emergency_incident_data = self.generate_emergency_incident()
 
+        # # call streaming data to kafka later
+        #     print(vehicle_data, file=file)
+        #     print(gps_data, file=file)
+        #     print(camera_data, file=file)
+        #     print(weather_data, file=file)
+        #     print(emergency_incident_data, file=file)
             time.sleep(1.5)
         
         print(f"Vehicle moved from {self.start_location} to {self.end_location}")
-
-
-
-# def procedureKafka(data):
-#     # flush
-#     pass
-
-# def streamKafka():
-#     while True:
-#         print("streaming...")
-#         break
